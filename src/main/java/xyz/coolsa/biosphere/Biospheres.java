@@ -34,8 +34,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 
-
-
 public class Biospheres implements ModInitializer {
 	public static BiosphereConfig bsconfig = new BiosphereConfig(48, 5, 12);
 	public Gson daData = new GsonBuilder().setPrettyPrinting().setFieldNamingPolicy(FieldNamingPolicy.UPPER_CAMEL_CASE).create();

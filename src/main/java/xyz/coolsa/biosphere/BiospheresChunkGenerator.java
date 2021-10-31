@@ -1,14 +1,9 @@
 package xyz.coolsa.biosphere;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
-import net.minecraft.util.crash.CrashException;
-import net.minecraft.util.crash.CrashReport;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.noise.OctavePerlinNoiseSampler;
@@ -17,26 +12,19 @@ import net.minecraft.world.HeightLimitView;
 import net.minecraft.world.Heightmap;
 import net.minecraft.world.Heightmap.Type;
 import net.minecraft.world.biome.Biome;
-import net.minecraft.world.biome.GenerationSettings;
-import net.minecraft.world.biome.source.BiomeAccess;
-import net.minecraft.world.biome.source.BiomeCoords;
 import net.minecraft.world.biome.source.BiomeSource;
 import net.minecraft.world.chunk.Chunk;
-import net.minecraft.world.chunk.ProtoChunk;
-import net.minecraft.world.chunk.WorldChunk;
 import net.minecraft.world.gen.ChunkRandom;
-import net.minecraft.world.gen.GenerationStep;
 import net.minecraft.world.gen.StructureAccessor;
-import net.minecraft.world.gen.carver.CarverContext;
-import net.minecraft.world.gen.carver.ConfiguredCarver;
-import net.minecraft.world.gen.chunk.*;
-import net.minecraft.world.gen.feature.StructureFeature;
+import net.minecraft.world.gen.chunk.ChunkGenerator;
+import net.minecraft.world.gen.chunk.StructuresConfig;
+import net.minecraft.world.gen.chunk.VerticalBlockSample;
 
-import java.rmi.registry.Registry;
-import java.util.*;
+import java.util.Collections;
+import java.util.Optional;
+import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
-import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
 public class BiospheresChunkGenerator extends ChunkGenerator {
@@ -283,32 +271,9 @@ public class BiospheresChunkGenerator extends ChunkGenerator {
 
 	@Override
 	public void generateFeatures(ChunkRegion region, StructureAccessor accessor) {
-		BlockPos chunkCenter = new BlockPos(region.getCenterPos().x * 16, 0, region.getCenterPos().z * 16);
-
-		Biome biome = this.biomeSource.getBiomeForNoiseGen(chunkCenter.getX() / 4 + 2, 2, chunkCenter.getZ() / 4 + 2);
-
+		this.finishBiospheres(region);
+		//TODO: rewrite *THIS* method to fix https://github.com/coolsa/Biospheres/issues/5 (Generator Features generate inconsistently)
 		super.generateFeatures(region, accessor);
-
-		long populationSeed = this.chunkRandom.setPopulationSeed(region.getSeed(), chunkCenter.getX(),
-				chunkCenter.getZ());
-		/*for (final GenerationStep.Feature feature : GenerationStep.Feature.values()) {
-			if (feature.equals(GenerationStep.Feature.LAKES)) {
-				continue;
-			}
-			try {
-				biome.generateFeatureStep(accessor, this, region, populationSeed, this.chunkRandom,
-						chunkCenter);
-			} catch (Exception exception) {
-				CrashReport crashReport = CrashReport.create(exception, "Biosphere Biome Decoration");
-				crashReport.addElement("Generation").add("CenterX", chunkCenter.getX())
-						.add("CenterZ", chunkCenter.getZ()).add("Step", feature).add("Seed", populationSeed)
-						.add("Biome", this.biomeSource.getBiomeForNoiseGen(chunkCenter.getX() / 4 + 2, 2, chunkCenter.getZ() / 4 + 2));
-				throw new CrashException(crashReport);
-			}
-		}
-		//if(runs > 9) {*/
-			this.finishBiospheres(region);
-		//}
 	}
 
 	public BlockPos[] getClosestSpheres(BlockPos centerPos) {

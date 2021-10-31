@@ -5,10 +5,9 @@ import net.fabricmc.api.Environment;
 import net.minecraft.client.world.GeneratorType;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
-import xyz.coolsa.biosphere.Biospheres;
-import xyz.coolsa.biosphere.BiospheresChunkGenerator;
 
 import java.util.List;
+
 @Environment(EnvType.CLIENT)
 @Mixin(GeneratorType.class)
 public interface GeneratorTypeMixin {
