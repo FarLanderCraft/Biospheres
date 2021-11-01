@@ -1,42 +1,20 @@
 package xyz.coolsa.biosphere;
 
-import java.util.List;
-import java.util.Map;
-import java.util.function.BiFunction;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-
-import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
-import com.mojang.datafixers.kinds.App;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-
-import net.minecraft.block.Blocks;
-import net.minecraft.util.Identifier;
 import net.minecraft.util.dynamic.RegistryLookupCodec;
-import com.mojang.datafixers.util.Pair;
-
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.util.registry.BuiltinRegistries;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.biome.BiomeKeys;
-import net.minecraft.world.biome.BuiltinBiomes;
-//import net.minecraft.world.biome.Biomes;
-//import net.minecraft.world.biome.BuiltinBiomes;
-import net.minecraft.world.biome.layer.BiomeLayers;
-import net.minecraft.world.biome.source.BiomeLayerSampler;
 import net.minecraft.world.biome.source.BiomeSource;
-import net.minecraft.world.biome.source.MultiNoiseBiomeSource;
 import net.minecraft.world.gen.ChunkRandom;
-import net.minecraft.world.gen.GenerationStep;
-import net.minecraft.world.gen.decorator.Decorator;
-import net.minecraft.world.gen.decorator.RangeDecoratorConfig;
-import net.minecraft.world.gen.feature.Feature;
-import net.minecraft.world.gen.feature.OreFeatureConfig;
+
+import java.util.List;
+
+//import net.minecraft.world.biome.BuiltinBiomes;
 
 public class BiospheresBiomeSource extends BiomeSource {
 
@@ -77,6 +55,7 @@ public class BiospheresBiomeSource extends BiomeSource {
 		//,BiomeKeys.MOUNTAINS
 		,BiomeKeys.NETHER_WASTES
 		,BiomeKeys.ICE_SPIKES
+		,BiomeKeys.OCEAN
 	);
 
 ////	public static final Codec<BiosphereBiomeSource> CODEC = Codec.mapPair(Identifier.CODEC.flatXmap(
@@ -96,19 +75,10 @@ public BiospheresBiomeSource(Registry<Biome> registry, long seed) {
 
 	@Override
 	public Biome getBiomeForNoiseGen(int biomeX, int biomeY, int biomeZ) {
-//		if(biomeX < 0) biomeX++;
-//		if(biomeZ < 0) biomeZ++;
-//		if (Math.abs(biomeX) - 6 > ((squareSize + curveSize) / 8)
-//				|| Math.abs(biomeZ) - 6 > ((squareSize + curveSize) / 8))
-////		System.out.println("AAAAAAAAAA");
-
-//		BlockPos centerPos 
 		if (this.getDistanceFromSphere(biomeX + 1, biomeZ + 1) < this.sphereRadius + 6) {
 			return registry.get(this.getBiomeForSphere(biomeX, biomeZ));
 		}
 //		return BiomeSelectors.vanilla().;
-//		return this.biomeSampler.sample(biomeX, biomeZ);
-//		return Biomes.OCEAN;
 		return registry.get(BiomeKeys.THE_VOID);
 	}
 
