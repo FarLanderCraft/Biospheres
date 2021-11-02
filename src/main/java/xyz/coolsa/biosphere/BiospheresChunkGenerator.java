@@ -55,7 +55,7 @@ public class BiospheresChunkGenerator extends ChunkGenerator {
 			.apply(instance, instance.stable(BiospheresChunkGenerator::new)));
 
 	public BiospheresChunkGenerator(BiomeSource biomeSource, long seed, int sphereDistance, int sphereRadius,
-			int lakeRadius, int shoreRadius) {
+									int lakeRadius, int shoreRadius) {
 		super(biomeSource, new StructuresConfig(Optional.of(StructuresConfig.DEFAULT_STRONGHOLD), Collections.emptyMap()));
 		this.biomeSource = biomeSource;
 		this.seed = seed;
@@ -83,7 +83,7 @@ public class BiospheresChunkGenerator extends ChunkGenerator {
 		for (BlockPos pos : BlockPos.iterate(chunk.getPos().getStartX(), 0, chunk.getPos().getStartZ(),
 				chunk.getPos().getEndX(), 0, chunk.getPos().getEndZ())) {
 
-			if (region.getBiome(centerPos).getCategory() == Biome.Category.NETHER){
+			if (region.getBiome(centerPos).getCategory() == Biome.Category.NETHER) {
 				region.getBiome(current.set(pos)).buildSurface((Random) this.chunkRandom, chunk, pos.getX(), pos.getZ(),
 						centerPos.getY() * 2, 0.0625, this.defaultNetherBlock, this.defaultFluid, -10, 0, this.seed);
 			} else {
@@ -172,7 +172,7 @@ public class BiospheresChunkGenerator extends ChunkGenerator {
 					}
 					// now lets check if we can do our lake gen.
 					if (((blockState.equals(this.defaultBlock) || blockState.equals(this.defaultNetherBlock))
-							&& (lakeDistance2d <= this.lakeRadius))	&& !fluidBlock.equals(Blocks.AIR.getDefaultState())) {
+							&& (lakeDistance2d <= this.lakeRadius)) && !fluidBlock.equals(Blocks.AIR.getDefaultState())) {
 						// if we are above the height and noise value, we will generate air.
 						if (y >= centerPos.getY() && (!fluidBlock.equals(Blocks.STONE.getDefaultState()) || !fluidBlock.equals(Blocks.NETHERRACK.getDefaultState()))) {
 							blockState = Blocks.AIR.getDefaultState();
@@ -205,6 +205,7 @@ public class BiospheresChunkGenerator extends ChunkGenerator {
 		}
 		return CompletableFuture.completedFuture(chunk);
 	}
+
 	private BlockState randomBlock() {
 		int rng = this.chunkRandom.nextInt(784);
 		if (rng == 1) {
@@ -270,12 +271,50 @@ public class BiospheresChunkGenerator extends ChunkGenerator {
 				this.sphereRadius, this.lakeRadius, this.shoreRadius);
 	}
 
+	public double calculateSphereHeight(BlockPos pos, BlockPos centerPos) {
+			return Math.sqrt(this.sphereRadius *this.sphereRadius
+			-(centerPos.getX()-pos.getX())*(centerPos.getX()-pos.getX())
+			-(pos.getZ()-centerPos.getZ())*(pos.getZ()-centerPos.getZ()));
+	}
+/* for (int y = centerPos.getY() - (int) calculateSphereHeight(pos, centerPos); y <= calculateSphereHeight(pos, centerPos) + centerPos.getY(); y++) {
+
+				} */
 	@Override
 	public void generateFeatures(ChunkRegion region, StructureAccessor accessor) {
-		this.finishBiospheres(region);
 		//TODO: rewrite *THIS* method to fix https://github.com/coolsa/Biospheres/issues/5 (Generator Features generate inconsistently)
-		super.generateFeatures(region, accessor);
-	}
+		BlockPos chunkCenter = new BlockPos(region.getCenterPos().x * 16, 0, region.getCenterPos().z * 16);
+		BlockPos.Mutable current = new BlockPos.Mutable();
+		BlockPos centerPos = this.getNearestCenterSphere(chunkCenter);
+		for (final BlockPos pos : BlockPos.iterate(chunkCenter.getX() - 7, centerPos.getY() - sphereRadius, chunkCenter.getZ() - 7,
+				chunkCenter.getX() - 7, centerPos.getY() + sphereRadius, chunkCenter.getZ() - 7)) {
+			current.set(pos);
+			double radialDistance = Math
+					.sqrt(centerPos.getSquaredDistance(pos.getX(), centerPos.getY(), pos.getZ(), false));
+			double noise = this.noiseSampler.sample(pos.getX() / 8.0, pos.getZ() / 8.0, 1 / 16.0, 1 / 16.0) / 8;
+
+			double newRadialDistance = Math
+					.sqrt(centerPos.getSquaredDistance(pos.getX(), pos.getY(), pos.getZ(), false));
+			double noiseTemp = (noise + pos.getY() / centerPos.getY());
+			BlockState blockState;
+			if (newRadialDistance <= this.sphereRadius - 1) {
+				continue;
+			}
+			if (pos.getY() * noiseTemp >= centerPos.getY()) {
+				//if (true) {
+				if (region.getBiome(centerPos).getCategory() == Biome.Category.UNDERGROUND) {
+					blockState = Blocks.TINTED_GLASS.getDefaultState();
+				} else if (region.getBiome(centerPos).getCategory() == Biome.Category.NETHER) {
+					blockState = Blocks.RED_STAINED_GLASS.getDefaultState();
+				} else {
+					blockState = Blocks.GLASS.getDefaultState();
+				}
+			} else {
+				if (region.getBiome(centerPos).getCategory() == Biome.Category.NETHER) {
+					blockState = this.defaultNetherBlock;
+				} else {
+					blockState = this.defaultBlock;
+				}
+			}
 
 	public void generateGlass(ChunkRegion region, BlockPos centerPos, BlockPos pos) {
 		BlockState blockState;
@@ -349,6 +388,36 @@ public class BiospheresChunkGenerator extends ChunkGenerator {
 			}
 
 			this.makeBridges(pos, centerPos, this.getClosestSpheres(centerPos), region, current);
+		}
+	}
+
+
+			if (radialDistance <= this.sphereRadius + 16) {
+				for (final BlockPos posHorizontal : BlockPos.iterate(chunkCenter.getX() - 7, 0, chunkCenter.getZ() - 7,
+						chunkCenter.getX() + 8, 0, chunkCenter.getZ() + 8)) {
+				double largerSphereHeight = Math.sqrt((this.sphereRadius + 16) * (this.sphereRadius + 16)
+						- (centerPos.getX() - posHorizontal.getX()) * (centerPos.getX() - posHorizontal.getX())
+						- (posHorizontal.getZ() - centerPos.getZ()) * (posHorizontal.getZ() - centerPos.getZ()));
+				for (int y = 0; y <= largerSphereHeight + centerPos.getY(); y++) {
+					newRadialDistance = Math
+							.sqrt(centerPos.getSquaredDistance(posHorizontal.getX(), y, posHorizontal.getZ(), false));
+						if (newRadialDistance >= this.sphereRadius) {
+							region.setBlockState(current.set(posHorizontal.getX(), y, posHorizontal.getZ()), Blocks.AIR.getDefaultState(), 0);
+						}
+					}
+					if (posHorizontal.getX() == centerPos.getX() && posHorizontal.getZ() == centerPos.getZ()) {
+						if (region.getBiome(centerPos).getCategory() == Biome.Category.UNDERGROUND) {
+							region.setBlockState(current.set(centerPos.getX(), centerPos.getY() + sphereRadius - 1, centerPos.getZ()), Blocks.TINTED_GLASS.getDefaultState(), 0);
+						} else if (region.getBiome(centerPos).getCategory() == Biome.Category.NETHER) {
+							region.setBlockState(current.set(centerPos.getX(), centerPos.getY() + sphereRadius - 1, centerPos.getZ()), Blocks.RED_STAINED_GLASS.getDefaultState(), 0);
+						} else {
+							region.setBlockState(current.set(centerPos.getX(), centerPos.getY() + sphereRadius - 1, centerPos.getZ()), Blocks.GLASS.getDefaultState(), 0);
+						}
+					}
+					region.setBlockState(current.set(posHorizontal.getX(), pos.getY(), posHorizontal.getZ()), blockState, 0);
+					this.makeBridges(pos, centerPos, this.getClosestSpheres(centerPos), region, current);
+				}
+			}
 		}
 	}
 
