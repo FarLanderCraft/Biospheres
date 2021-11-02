@@ -3,15 +3,17 @@ package xyz.coolsa.biosphere;
 import com.google.common.collect.ImmutableList;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.util.dynamic.RegistryLookupCodec;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.registry.DynamicRegistryManager;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.biome.BiomeKeys;
 import net.minecraft.world.biome.source.BiomeSource;
-import net.minecraft.world.gen.ChunkRandom;
-
+import net.minecraft.world.biome.source.util.MultiNoiseUtil;
+import net.minecraft.world.gen.random.ChunkRandom;
 import java.util.List;
 
 //import net.minecraft.world.biome.BuiltinBiomes;
@@ -27,7 +29,7 @@ public class BiospheresBiomeSource extends BiomeSource {
 	protected final int sphereRadius;
 	protected final ChunkRandom chunkRandom;
 	protected final Registry<Biome> registry;
-////	protected final long seed;
+	private final NbtCompound biomeSettings;
 ////	protected final int squareSize 
 ////	protected final int curveSize;
 ////	private final BiomeLayerSampler biomeSampler;
@@ -44,7 +46,7 @@ public class BiospheresBiomeSource extends BiomeSource {
 		,BiomeKeys.MUSHROOM_FIELDS
 		,BiomeKeys.DESERT
 		,BiomeKeys.DARK_FOREST
-		,BiomeKeys.SNOWY_TUNDRA
+		,BiomeKeys.SNOWY_PLAINS
 		,BiomeKeys.BAMBOO_JUNGLE
 		,BiomeKeys.BASALT_DELTAS
 		,BiomeKeys.FLOWER_FOREST
@@ -63,22 +65,40 @@ public class BiospheresBiomeSource extends BiomeSource {
 ////					.map(DataResult::success).orElseGet(() -> DataResult.error("Unknown preset: " + identifier)),
 //BuiltinRegistries.BIOME.get(BuiltinBiomesreset -> DataResult.success(preset.id)).fieldOf("preset"), Codec.LONG.fieldOf("seed")).stable();
 //
-public BiospheresBiomeSource(Registry<Biome> registry, long seed) {
+	public BiospheresBiomeSource(DynamicRegistryManager registry, long seed) {
 		super(ImmutableList.of());
 		this.seed = seed;
 		this.sphereDistance = Biospheres.bsconfig.sphereRadius * 4;
 		this.sphereRadius = Biospheres.bsconfig.sphereRadius;
 		this.chunkRandom = new ChunkRandom(seed);
-		this.registry = registry;
+		this.biomeSettings = null;
+		//this.registry = registry;
 		// TODO Auto-generated constructor stub
 	}
 
 	@Override
-	public Biome getBiomeForNoiseGen(int biomeX, int biomeY, int biomeZ) {
+	public Biome getBiome(int biomeX, int biomeY, int biomeZ, MultiNoiseUtil.MultiNoiseSampler noiseSampler) {
 		if (this.getDistanceFromSphere(biomeX + 1, biomeZ + 1) < this.sphereRadius + 6) {
-			return registry.get(this.getBiomeForSphere(biomeX, biomeZ));
+			if (biomeY < 4) {
+				return registry.get(this.getBiomeForSphere(biomeX, biomeZ));
+			}
 		}
-//		return BiomeSelectors.vanilla().;
+		return registry.get(BiomeKeys.THE_VOID);
+	}
+
+	public Biome getBiomeFromSphereGen(int biomeX, int biomeY, int biomeZ, BlockPos centerPos) {
+		BlockPos pos = new BlockPos(biomeX, biomeY, biomeZ);
+		double sphereHeight = Math.sqrt(this.sphereRadius * this.sphereRadius
+			- (centerPos.getX() - pos.getX()) * (centerPos.getX() - pos.getX())
+			- (pos.getZ() - centerPos.getZ()) * (pos.getZ() - centerPos.getZ()));
+		double newRadialDistance = Math
+				.sqrt(centerPos.getSquaredDistance(pos.getX(), pos.getY(), pos.getZ(), false));
+
+		if (this.getDistanceFromSphere(biomeX + 1, biomeZ + 1) < this.sphereRadius + 6) {
+			if (biomeY < sphereHeight) {
+				if (newRadialDistance < sphereRadius) return registry.get(this.getBiomeForSphere(biomeX, biomeZ));
+			}
+		}
 		return registry.get(BiomeKeys.THE_VOID);
 	}
 
@@ -88,6 +108,15 @@ public BiospheresBiomeSource(Registry<Biome> registry, long seed) {
 		this.chunkRandom.setTerrainSeed(centerX, centerZ);
 		BlockPos center = new BlockPos(centerX, 0, centerZ);
 		return Math.sqrt(center.getSquaredDistance(biomeX * 4, 0, biomeZ * 4, true));
+	}
+
+	public RegistryKey<Biome> getBiomeForSphere(int biomeX, int biomeY, int biomeZ, BlockPos centerPos) {
+		int centerX = (int) Math.round(biomeX * 4 / (double) this.sphereDistance) * this.sphereDistance;
+		int centerY = (int) Math.round(biomeY * 4 / (double) this.sphereDistance) * this.sphereDistance;
+		int centerZ = (int) Math.round(biomeZ * 4 / (double) this.sphereDistance) * this.sphereDistance;
+		this.chunkRandom.setTerrainSeed(centerX, centerZ);
+		int randomChoice = this.chunkRandom.nextInt(BiospheresBiomeSource.BIOMES.size());
+		return BiospheresBiomeSource.BIOMES.get(randomChoice);
 	}
 
 	public RegistryKey<Biome> getBiomeForSphere(int biomeX, int biomeZ) {

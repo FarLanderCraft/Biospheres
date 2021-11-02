@@ -1,4 +1,4 @@
-package xyz.coolsa.biosphere;
+/*package xyz.coolsa.biosphere;
 import java.util.function.Supplier;
 import net.minecraft.block.BlockState;
 import net.minecraft.util.math.BlockPos;
@@ -9,7 +9,6 @@ import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.biome.source.BiomeSource;
 import net.minecraft.world.ChunkRegion;
 import net.minecraft.world.chunk.Chunk;
-import net.minecraft.world.gen.ChunkRandom;
 import net.minecraft.world.gen.StructureAccessor;
 import net.minecraft.world.gen.chunk.ChunkGeneratorSettings;
 import com.mojang.serialization.Codec;
@@ -18,6 +17,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import org.lwjgl.system.CallbackI.J;
 
 import net.minecraft.world.gen.chunk.NoiseChunkGenerator;
+import net.minecraft.world.gen.random.ChunkRandom;
 
 public class OverworldBiosphereGen extends NoiseChunkGenerator {
     // If you know enough to be playing with the source, I made it easy. Just set this to false if you want to disable bridges
@@ -56,7 +56,7 @@ public class OverworldBiosphereGen extends NoiseChunkGenerator {
             return sphereRadiusMax;
         }
         // make random sized spheres
-        this.chunkRandom.setTerrainSeed(centerX, centerY);
+        this.chunkRandom.setCarverSeed(this.seed, centerX, centerY);
         return this.chunkRandom.nextInt((int) (sphereRadiusMax - sphereRadiusMin)) + sphereRadiusMin;
     }
 
@@ -421,3 +421,4 @@ public class OverworldBiosphereGen extends NoiseChunkGenerator {
 	}
 
 }
+*/

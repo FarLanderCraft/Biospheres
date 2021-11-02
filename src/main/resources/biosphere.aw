@@ -2,6 +2,7 @@ accessWidener v1 named
 
 accessible class net/minecraft/client/render/RenderPhase$Texture
 accessible class net/minecraft/client/render/RenderLayer$MultiPhaseParameters
+accessible class Lnet/minecraft/util/math/noise/OctavePerlinNoiseSampler <init> (Lnet/minecraft/world/gen/random/AbstractRandom;Lcom/mojang/datafixers/util/Pair;Z)V
 extendable class net/minecraft/world/gen/chunk/NoiseChunkGenerator
 
 accessible method net/minecraft/client/world/GeneratorType <init> (Ljava/lang/String;)V
