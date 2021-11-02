@@ -20,6 +20,7 @@ import net.minecraft.world.gen.chunk.ChunkGenerator;
 import net.minecraft.world.gen.chunk.StructuresConfig;
 import net.minecraft.world.gen.chunk.VerticalBlockSample;
 
+import javax.swing.plaf.synth.Region;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.Random;
@@ -276,25 +277,32 @@ public class BiospheresChunkGenerator extends ChunkGenerator {
 		super.generateFeatures(region, accessor);
 	}
 
-	public BlockPos[] getClosestSpheres(BlockPos centerPos) {
-		BlockPos[] nesw = new BlockPos[4];
-		for (int i = 0; i < 4; i++) {
-			int xMod = centerPos.getX();
-			int zMod = centerPos.getZ();
-			if (i / 2 < 1) {
-				xMod += (int) Math.round(Math.pow(-1, i) * this.sphereDistance);
-			} else {
-				zMod += (int) Math.round(Math.pow(-1, i) * this.sphereDistance);
-			}
-			nesw[i] = this.getNearestCenterSphere(new BlockPos(xMod, 0, zMod));
+	public void generateGlass(ChunkRegion region, BlockPos centerPos, BlockPos pos) {
+		BlockState blockState;
+		if (region.getBiome(centerPos).getCategory() == Biome.Category.UNDERGROUND) {
+			blockState = Blocks.TINTED_GLASS.getDefaultState();
+		} else if (region.getBiome(centerPos).getCategory() == Biome.Category.NETHER) {
+			blockState = Blocks.RED_STAINED_GLASS.getDefaultState();
+		} else {
+			blockState = Blocks.GLASS.getDefaultState();
 		}
-		return nesw;
+		region.setBlockState(pos, blockState, 0);
+	}
+	public void generateStone(ChunkRegion region, BlockPos centerPos, BlockPos pos) {
+		BlockState blockState;
+		if (region.getBiome(centerPos).getCategory() == Biome.Category.NETHER) {
+			blockState = this.defaultNetherBlock;
+		} else {
+			blockState = this.defaultBlock;
+		}
+		region.setBlockState(pos, blockState, 0);
 	}
 
 	public void finishBiospheres(ChunkRegion region) {
 		BlockPos chunkCenter = new BlockPos(region.getCenterPos().x * 16, 0, region.getCenterPos().z * 16);
 		BlockPos.Mutable current = new BlockPos.Mutable();
 		BlockPos centerPos = this.getNearestCenterSphere(chunkCenter);
+		boolean isGlassGenerated;
 		for (final BlockPos pos : BlockPos.iterate(chunkCenter.getX() - 7, 0, chunkCenter.getZ() - 7,
 				chunkCenter.getX() + 8, 0, chunkCenter.getZ() + 8)) {
 			current.set(pos);
@@ -313,24 +321,11 @@ public class BiospheresChunkGenerator extends ChunkGenerator {
 					if (newRadialDistance <= this.sphereRadius - 1) {
 						continue;
 					}
-
 					if (y * noiseTemp >= centerPos.getY()) {
-					//if (true) {
-						if (region.getBiome(centerPos).getCategory() == Biome.Category.UNDERGROUND) {
-							blockState = Blocks.TINTED_GLASS.getDefaultState();
-						} else if (region.getBiome(centerPos).getCategory() == Biome.Category.NETHER) {
-							blockState = Blocks.RED_STAINED_GLASS.getDefaultState();
-						} else {
-							blockState = Blocks.GLASS.getDefaultState();
-						}
+						generateGlass(region, centerPos, current.set(pos.getX(), y, pos.getZ()));
 					} else {
-						if (region.getBiome(centerPos).getCategory() == Biome.Category.NETHER) {
-							blockState = this.defaultNetherBlock;
-						} else {
-							blockState = this.defaultBlock;
-						}
+						generateStone(region, centerPos, current.set(pos.getX(), y, pos.getZ()));
 					}
-					region.setBlockState(current.set(pos.getX(), y, pos.getZ()), blockState, 0);
 				}
 				double largerSphereHeight = Math.sqrt((this.sphereRadius + 16) * (this.sphereRadius + 16)
 						- (centerPos.getX() - pos.getX()) * (centerPos.getX() - pos.getX())
@@ -355,6 +350,21 @@ public class BiospheresChunkGenerator extends ChunkGenerator {
 
 			this.makeBridges(pos, centerPos, this.getClosestSpheres(centerPos), region, current);
 		}
+	}
+
+	public BlockPos[] getClosestSpheres(BlockPos centerPos) {
+		BlockPos[] nesw = new BlockPos[4];
+		for (int i = 0; i < 4; i++) {
+			int xMod = centerPos.getX();
+			int zMod = centerPos.getZ();
+			if (i / 2 < 1) {
+				xMod += (int) Math.round(Math.pow(-1, i) * this.sphereDistance);
+			} else {
+				zMod += (int) Math.round(Math.pow(-1, i) * this.sphereDistance);
+			}
+			nesw[i] = this.getNearestCenterSphere(new BlockPos(xMod, 0, zMod));
+		}
+		return nesw;
 	}
 
 	public void makeBridges(BlockPos pos, BlockPos centerPos, BlockPos[] nesw, ChunkRegion region,
